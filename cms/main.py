@@ -7,7 +7,7 @@ from cms import config
 
 parser = argparse.ArgumentParser(description='serve up a content management system for markdown files')
 parser.add_argument('-a', '--address', dest='address', help='address to bind')
-parser.add_argument('-p', '--port', dest='port', help='port to bind')
+parser.add_argument('-p', '--port', type=int, dest='port', help='port to bind')
 parser.add_argument('-t', '--template', dest='template', help='template directory to use')
 parser.add_argument('-l', '--log', dest='log', help='log directory to use')
 parser.add_argument('root', nargs='?', help='root directory to serve markdown files')
