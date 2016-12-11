@@ -1,5 +1,4 @@
 import mimetypes
-import os
 import time
 import urllib.parse
 
@@ -20,7 +19,7 @@ error_routes = {}
 
 
 class Resource(web.file.FileHandler):
-    local = os.path.dirname(__file__) + '/res'
+    local = config.template + '/res'
     remote = '/res'
     fileidx = 0
 
@@ -49,7 +48,7 @@ class PageResource(Resource):
 
 
 class Page(web.page.PageHandler):
-    directory = os.path.dirname(__file__) + '/html'
+    directory = config.template
     page = 'page.html'
 
     def format(self, output):
@@ -87,7 +86,7 @@ class Page(web.page.PageHandler):
 
 
 class ErrorPage(web.page.PageErrorHandler):
-    directory = os.path.dirname(__file__) + '/html'
+    directory = config.template
     page = 'error.html'
 
 
