@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from distutils.core import setup
 
-from cmd import name, version
+from cms import name, version
 
 
 setup(
