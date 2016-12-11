@@ -4,7 +4,7 @@ from cms import name, version
 from cms import log, http
 
 
-log.urilog.info(name + ' ' + version + ' starting...')
+log.cmslog.info(name + ' ' + version + ' starting...')
 
 # start everything
 http.start()

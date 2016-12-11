@@ -11,7 +11,7 @@ from cms import config, log
 
 
 resource = '([/a-zA-Z0-9._-]+)'
-page = '([/a-zA-Z0-9_-]+)'
+page = '([/a-zA-Z0-9_-]+(?:\.md)?)'
 
 http = None
 
@@ -42,8 +42,8 @@ class PageResource(Resource):
     def respond(self):
         page = self.groups[0]
 
-        self.local = config.root + '/' + page + '.res'
-        self.remote = '/' + page + '/res'
+        self.local = config.root + page + '.res'
+        self.remote = page + '/res'
 
         return super().respond()
 
@@ -55,8 +55,17 @@ class Page(web.page.PageHandler):
     def format(self, output):
         page = self.groups[0]
 
+        if page.endswith('.md'):
+            try:
+                self.response.headers.set('Content-Type', 'text/markdown')
+                return open(config.root + page, 'rb')
+            except FileNotFoundError:
+                raise web.HTTPError(404)
+        elif page.endswith('/'):
+            page += 'index'
+
         try:
-            with open(config.root + '/' + page + '.md', 'r') as file:
+            with open(config.root + page + '.md', 'r') as file:
                 title = file.readline()
 
                 title.strip()
@@ -82,7 +91,7 @@ class ErrorPage(web.page.PageErrorHandler):
     page = 'error.html'
 
 
-routes.update({'/res/' + resource: Resource, '/' + page + '/res/' + resource: PageResource, '/' + page: Page})
+routes.update({'/res' + resource: Resource, page + '/res' + resource: PageResource, page: Page})
 error_routes.update(web.page.new_error(handler=ErrorPage))
 
 
