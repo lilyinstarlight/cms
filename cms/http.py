@@ -18,9 +18,9 @@ if config.blog:
 
 
 resource = '([/a-zA-Z0-9._-]+)'
-page = '([/a-zA-Z0-9_-]+(?:\.md)?)'
-atom = '([/a-zA-Z0-9_-]+(?:atom\.xml))'
-rss = '([/a-zA-Z0-9_-]+(?:rss\.xml))'
+page = '([/a-zA-Z0-9_-]+(?:\.md)?(?!\.xml))'
+atom = '([/a-zA-Z0-9_-]+)atom\.xml'
+rss = '([/a-zA-Z0-9_-]+)rss\.xml'
 
 http = None
 
@@ -103,9 +103,9 @@ class Page(web.page.PageHandler):
                         with open(path, 'r') as file:
                             title = extract_title(file)
 
-                        date = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M %Z')
+                        date = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
 
-                        content += '\n<li><a href="{href}">{title} - {date}</a></li>'.format(href=href, title=title, date=date)
+                        content += '\n<li><h3><a href="{href}">{title}</a></h3><time>{date}</time></li>'.format(href=href, title=title, date=date)
 
                 content += '\n</ul>'
 
@@ -140,16 +140,15 @@ class Feed(web.HTTPHandler):
 
         fg.id(directory)
         fg.title(data['title'])
+        fg.subtitle(data['subtitle'])
         fg.author(data['author'])
+        fg.link(href=directory)
 
         if 'link' in data:
             fg.link(data['link'])
 
         if 'logo' in data:
             fg.logo(data['logo'])
-
-        if 'subtitle' in data:
-            fg.subtitle(data['subtitle'])
 
         if 'language' in data:
             fg.language(data['language'])
@@ -161,7 +160,7 @@ class Feed(web.HTTPHandler):
             if filename.endswith('.md'):
                 fe = fg.add_entry()
 
-                href = directory + '/' + filename
+                href = directory + filename
                 path = config.root + href
 
                 with open(path, 'r') as file:
@@ -173,9 +172,9 @@ class Feed(web.HTTPHandler):
                 fe.published(datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc))
 
         if self.format == 'Atom':
-            return fg.atom_str(pretty=True)
+            return 200, fg.atom_str(pretty=True)
         elif self.format == 'RSS':
-            return fg.rss_str(pretty=True)
+            return 200, fg.rss_str(pretty=True)
         else:
             raise NotImplementedError
 
