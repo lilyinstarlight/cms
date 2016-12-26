@@ -171,7 +171,7 @@ class Feed(web.HTTPHandler):
 
         if self.format == 'Atom':
             return fg.atom_str(pretty=True)
-        elif self.format == 'RSS'
+        elif self.format == 'RSS':
             return fg.rss_str(pretty=True)
         else:
             raise NotImplementedError
