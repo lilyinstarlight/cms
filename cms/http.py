@@ -7,11 +7,14 @@ import time
 import urllib.parse
 
 import markdown
-import feedgen.feed
 
 import web, web.file, web.page
 
 from cms import config, log
+
+
+if config.blog:
+    import feedgen.feed
 
 
 resource = '([/a-zA-Z0-9._-]+)'
