@@ -169,9 +169,9 @@ class Feed(web.HTTPHandler):
 
                 fe.published(datetime.datetime.fromtimestamp(os.path.ctime(path)))
 
-        if self.format = 'Atom':
+        if self.format == 'Atom':
             return fg.atom_str(pretty=True)
-        elif self.format = 'RSS'
+        elif self.format == 'RSS'
             return fg.rss_str(pretty=True)
         else:
             raise NotImplementedError
