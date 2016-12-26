@@ -95,17 +95,20 @@ class Page(web.page.PageHandler):
             else:
                 content = '<ul>'
 
-                for filename in os.listdir(config.root + page):
-                    if filename.endswith('.md'):
-                        href = page + filename[:-3]
-                        path = config.root + page + filename
+                try:
+                    for filename in os.listdir(config.root + page):
+                        if filename.endswith('.md'):
+                            href = page + filename[:-3]
+                            path = config.root + page + filename
 
-                        with open(path, 'r') as file:
-                            title = extract_title(file)
+                            with open(path, 'r') as file:
+                                title = extract_title(file)
 
-                        date = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+                            date = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
 
-                        content += '\n<li><h3><a href="{href}">{title}</a></h3><time>{date}</time></li>'.format(href=href, title=title, date=date)
+                            content += '\n<li><h3><a href="{href}">{title}</a></h3><time>{date}</time></li>'.format(href=href, title=title, date=date)
+                except FileNotFoundError:
+                    raise web.HTTPError(404)
 
                 content += '\n</ul>'
 
