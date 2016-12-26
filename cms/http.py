@@ -80,6 +80,10 @@ class Page(web.page.PageHandler):
     directory = config.template
     page = 'page.html'
 
+    def respond(self):
+        if config.blog and self.groups[0].endswith('/'):
+            self.page = 'index.html'
+
     def format(self, output):
         page = self.groups[0]
 
@@ -93,7 +97,7 @@ class Page(web.page.PageHandler):
             if not config.blog:
                 page += 'index'
             else:
-                content = '<ul>'
+                index = '<ul>'
 
                 try:
                     for filename in os.listdir(config.root + page):
@@ -104,24 +108,28 @@ class Page(web.page.PageHandler):
                             with open(path, 'r') as file:
                                 title = extract_title(file)
 
-                            date = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+                            time = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
 
-                            content += '\n<li><h3><a href="{href}">{title}</a></h3><time>{date}</time></li>'.format(href=href, title=title, date=date)
+                            index += '\n<li><h3><a href="{href}">{title}</a></h3><time>{time}</time></li>'.format(href=href, title=title, time=time)
                 except FileNotFoundError:
                     raise web.HTTPError(404)
 
-                content += '\n</ul>'
+                index += '\n</ul>'
 
-                return output.format(title='Index', content=content)
+                return output.format(index=index)
 
         try:
-            with open(config.root + page + '.md', 'r') as file:
+            path = config.root + page + '.md'
+
+            with open(path, 'r') as file:
                 title = extract_title(file)
                 content = extract_content(file)
+
+            time = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
         except FileNotFoundError:
             raise web.HTTPError(404)
 
-        return output.format(title=title, content=content)
+        return output.format(title=title, time=time, content=content)
 
 
 class Feed(web.HTTPHandler):
