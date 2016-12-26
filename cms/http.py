@@ -84,6 +84,8 @@ class Page(web.page.PageHandler):
         if config.blog and self.groups[0].endswith('/'):
             self.page = 'index.html'
 
+        return super().respond()
+
     def format(self, output):
         page = self.groups[0]
 
