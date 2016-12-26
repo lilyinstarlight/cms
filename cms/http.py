@@ -103,7 +103,7 @@ class Page(web.page.PageHandler):
                         with open(path, 'r') as file:
                             title = extract_title(file)
 
-                        date = datetime.datetime.fromtimestamp(os.path.getctime(path)).strftime('%Y-%m-%d %H:%M UTC')
+                        date = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M %Z')
 
                         content += '\n<li><a href="{href}">{title} - {date}</a></li>'.format(href=href, title=title, date=date)
 
@@ -170,7 +170,7 @@ class Feed(web.HTTPHandler):
 
                 fe.id(href)
 
-                fe.published(datetime.datetime.fromtimestamp(os.path.getctime(path)))
+                fe.published(datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc))
 
         if self.format == 'Atom':
             return fg.atom_str(pretty=True)
