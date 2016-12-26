@@ -148,10 +148,10 @@ class Feed(web.HTTPHandler):
         if 'subtitle' in data:
             fg.subtitle(data['subtitle'])
 
-        if 'language' in data
+        if 'language' in data:
             fg.language(data['language'])
 
-        if 'rights' in data
+        if 'rights' in data:
             fg.rights(data['rights'])
 
         for filename in os.listdir(config.root + directory):
