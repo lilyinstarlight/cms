@@ -102,7 +102,10 @@ class Page(web.page.PageHandler):
                 index = '<ul>'
 
                 try:
-                    for filename in os.listdir(config.root + page):
+                    files = [filename for filename in os.listdir(config.root + page)]
+                    files.sort(key=lambda x: os.path.getctime(config.root + page + filename))
+
+                    for filename in files:
                         if filename.endswith('.md'):
                             href = page + filename[:-3]
                             path = config.root + page + filename
@@ -169,7 +172,10 @@ class Feed(web.HTTPHandler):
         if 'rights' in data:
             fg.rights(data['rights'])
 
-        for filename in os.listdir(config.root + directory):
+        files = [filename for filename in os.listdir(config.root + directory)]
+        files.sort(key=lambda x: os.path.getctime(config.root + directory + filename))
+
+        for filename in files:
             if filename.endswith('.md'):
                 fe = fg.add_entry()
 
