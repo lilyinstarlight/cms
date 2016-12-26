@@ -12,5 +12,8 @@ template = os.path.dirname(__file__) + '/html'
 # root directory of markdown files
 root = '/var/www/cms'
 
+# whether this website is a blog
+blog = False
+
 # markdown extensions
 extensions = ['extra', 'codehilite', 'smarty', 'toc']

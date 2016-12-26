@@ -1,8 +1,13 @@
+import datetime
+import json
 import mimetypes
+import os
+import os.path
 import time
 import urllib.parse
 
 import markdown
+import feedgen.feed
 
 import web, web.file, web.page
 
@@ -11,11 +16,32 @@ from cms import config, log
 
 resource = '([/a-zA-Z0-9._-]+)'
 page = '([/a-zA-Z0-9_-]+(?:\.md)?)'
+atom = '([/a-zA-Z0-9_-]+(?:atom\.xml)?)'
+rss = '([/a-zA-Z0-9_-]+(?:rss\.xml)?)'
 
 http = None
 
 routes = {}
 error_routes = {}
+
+
+def extract_title(file):
+    title = file.readline()
+
+    title.strip()
+
+    if title[0] == '#':
+        title = title[1:]
+    else:
+        file.readline()
+
+    title.strip()
+
+    return title
+
+
+def extract_content(file):
+    return markdown.markdown(file.read(), extensions=['markdown.extensions.' + extension for extension in config.extensions], output_format='xhtml5')
 
 
 class Resource(web.file.FileHandler):
@@ -61,28 +87,102 @@ class Page(web.page.PageHandler):
             except FileNotFoundError:
                 raise web.HTTPError(404)
         elif page.endswith('/'):
-            page += 'index'
+            if not config.blog:
+                page += 'index'
+            else:
+                content = '<ul>'
+
+                for filename in os.listdir(config.root + page):
+                    if filename.endswith('.md'):
+                        href = page + filename[:-3]
+                        path = config.root + page + filename
+
+                        with open(path, 'r') as file:
+                            title = extract_title(file)
+
+                        date = datetime.datetime.fromtimestamp(os.path.ctime(path)).strftime('%Y-%m-%d %H:%M UTC')
+
+                        content += '\n<li><a href="{href}">{title} - {date}</a></li>'.format(href=href, title=title, date=date)
+
+                content += '\n</ul>'
+
+                return output.format(title='Index', content=content)
 
         try:
             with open(config.root + page + '.md', 'r') as file:
-                title = file.readline()
-
-                title.strip()
-
-                if title[0] == '#':
-                    title = title[1:]
-                else:
-                    file.readline()
-
-                title.strip()
-
-                mdcontent = file.read()
+                title = extract_title(file)
+                content = extract_content(file)
         except FileNotFoundError:
             raise web.HTTPError(404)
 
-        content = markdown.markdown(mdcontent, extensions=['markdown.extensions.' + extension for extension in config.extensions], output_format='xhtml5')
-
         return output.format(title=title, content=content)
+
+
+class Feed(web.HTTPHandler):
+    format = 'Atom'
+
+    def do_get(self):
+        if not config.blog:
+            raise web.HTTPError(404)
+
+        directory = self.groups[0]
+
+        try:
+            with open(config.root + directory + '/feed.json', 'r') as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            raise web.HTTPError(404)
+
+        fg = feedgen.feed.FeedGenerator()
+
+        fg.id(directory)
+        fg.title(data['title'])
+        fg.author(data['author'])
+
+        if 'link' in data:
+            fg.link(data['link'])
+
+        if 'logo' in data:
+            fg.logo(data['logo'])
+
+        if 'subtitle' in data:
+            fg.subtitle(data['subtitle'])
+
+        if 'language' in data
+            fg.language(data['language'])
+
+        if 'rights' in data
+            fg.rights(data['rights'])
+
+        for filename in os.listdir(config.root + directory):
+            if filename.endswith('.md'):
+                fe = fg.add_entry()
+
+                href = directory + '/' + filename
+                path = config.root + href
+
+                with open(path, 'r') as file:
+                    fe.title(extract_title(file))
+                    fe.content(extract_content(file), src=href)
+
+                fe.id(href)
+
+                fe.published(datetime.datetime.fromtimestamp(os.path.ctime(path)))
+
+        if self.format = 'Atom':
+            return fg.atom_str(pretty=True)
+        elif self.format = 'RSS'
+            return fg.rss_str(pretty=True)
+        else:
+            raise NotImplementedError
+
+
+class Atom(Feed):
+    format = 'Atom'
+
+
+class RSS(Feed):
+    format = 'RSS'
 
 
 class ErrorPage(web.page.PageErrorHandler):
@@ -90,7 +190,7 @@ class ErrorPage(web.page.PageErrorHandler):
     page = 'error.html'
 
 
-routes.update({'/res' + resource: Resource, page + '/res' + resource: PageResource, page: Page})
+routes.update({'/res' + resource: Resource, page + '/res' + resource: PageResource, page: Page, atom: Atom, rss: RSS})
 error_routes.update(web.page.new_error(handler=ErrorPage))
 
 
