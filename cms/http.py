@@ -103,7 +103,7 @@ class Page(web.page.PageHandler):
 
                 try:
                     files = [filename for filename in os.listdir(config.root + page)]
-                    files.sort(key=lambda filename: os.path.getctime(config.root + page + filename))
+                    files.sort(key=lambda filename: os.path.getctime(config.root + page + filename), reverse=True)
 
                     for filename in files:
                         if filename.endswith('.md'):
@@ -173,7 +173,7 @@ class Feed(web.HTTPHandler):
             fg.rights(data['rights'])
 
         files = [filename for filename in os.listdir(config.root + directory)]
-        files.sort(key=lambda filename: os.path.getctime(config.root + directory + filename))
+        files.sort(key=lambda filename: os.path.getctime(config.root + directory + filename), reverse=True)
 
         for filename in files:
             if filename.endswith('.md'):
