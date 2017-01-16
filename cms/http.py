@@ -18,9 +18,9 @@ if config.blog:
 
 
 resource = '([/a-zA-Z0-9._-]+)'
-page = '([/a-zA-Z0-9_-]+(?:\.md)?(?!\.xml))'
-atom = '([/a-zA-Z0-9_-]+)atom\.xml'
-rss = '([/a-zA-Z0-9_-]+)rss\.xml'
+page = '([/a-zA-Z0-9._-]+(?:\.md)?(?!\.xml))'
+atom = '([/a-zA-Z0-9._-]+)atom\.xml'
+rss = '([/a-zA-Z0-9._-]+)rss\.xml'
 
 http = None
 
