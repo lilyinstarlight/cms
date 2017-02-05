@@ -103,7 +103,7 @@ class Page(web.page.PageHandler):
 
                 try:
                     files = [filename for filename in os.listdir(config.root + page)]
-                    files.sort(key=lambda filename: os.path.getctime(config.root + page + filename), reverse=True)
+                    files.sort(key=lambda filename: os.path.getmtime(config.root + page + filename), reverse=True)
 
                     for filename in files:
                         if filename.endswith('.md'):
@@ -113,7 +113,7 @@ class Page(web.page.PageHandler):
                             with open(path, 'r') as file:
                                 title = extract_title(file)
 
-                            time = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+                            time = datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
 
                             index += '\n<li><h3><a href="{href}">{title}</a></h3><time>{time}</time></li>'.format(href=href, title=title, time=time)
                 except FileNotFoundError:
@@ -130,7 +130,7 @@ class Page(web.page.PageHandler):
                 title = extract_title(file)
                 content = extract_content(file)
 
-            time = datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+            time = datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
         except FileNotFoundError:
             raise web.HTTPError(404)
 
@@ -173,7 +173,7 @@ class Feed(web.HTTPHandler):
             fg.rights(data['rights'])
 
         files = [filename for filename in os.listdir(config.root + directory)]
-        files.sort(key=lambda filename: os.path.getctime(config.root + directory + filename), reverse=True)
+        files.sort(key=lambda filename: os.path.getmtime(config.root + directory + filename), reverse=True)
 
         for filename in files:
             if filename.endswith('.md'):
@@ -188,7 +188,7 @@ class Feed(web.HTTPHandler):
 
                 fe.id(href)
 
-                fe.published(datetime.datetime.fromtimestamp(os.path.getctime(path), datetime.timezone.utc))
+                fe.published(datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc))
 
         if self.format == 'Atom':
             return 200, fg.atom_str(pretty=True)
