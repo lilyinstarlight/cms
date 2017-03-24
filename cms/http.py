@@ -175,6 +175,8 @@ class Feed(web.HTTPHandler):
         files = [filename for filename in os.listdir(config.root + directory)]
         files.sort(key=lambda filename: os.path.getmtime(config.root + directory + filename), reverse=True)
 
+        updated = None
+
         for filename in files:
             if filename.endswith('.md'):
                 fe = fg.add_entry()
@@ -191,6 +193,11 @@ class Feed(web.HTTPHandler):
                 date = datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc)
                 fe.published(date)
                 fe.updated(date)
+
+                if not updated or date > updated:
+                    updated = date
+
+        fg.updated(updated)
 
         if self.format == 'Atom':
             return 200, fg.atom_str(pretty=True)
