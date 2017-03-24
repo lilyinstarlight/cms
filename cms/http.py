@@ -188,7 +188,9 @@ class Feed(web.HTTPHandler):
 
                 fe.id(href)
 
-                fe.published(datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc))
+                date = datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc)
+                fe.published(date)
+                fe.updated(date)
 
         if self.format == 'Atom':
             return 200, fg.atom_str(pretty=True)
