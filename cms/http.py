@@ -1,3 +1,4 @@
+import collections
 import datetime
 import json
 import mimetypes
@@ -18,13 +19,13 @@ if config.blog:
 
 
 resource = '([/a-zA-Z0-9._-]+)'
-page = '(?!/res)([/a-zA-Z0-9._-]+(?:\.md)?(?!\.xml))'
-atom = '(?!/res)([/a-zA-Z0-9._-]+)atom\.xml'
-rss = '(?!/res)([/a-zA-Z0-9._-]+)rss\.xml'
+page = '([/a-zA-Z0-9._-]+(?:\.md)?)'
+atom = '([/a-zA-Z0-9._-]+)atom\.xml'
+rss = '([/a-zA-Z0-9._-]+)rss\.xml'
 
 http = None
 
-routes = {}
+routes = collections.OrderedDict()
 error_routes = {}
 
 
@@ -220,7 +221,7 @@ class ErrorPage(web.page.PageErrorHandler):
     page = 'error.html'
 
 
-routes.update({'/res' + resource: Resource, page + '/res' + resource: PageResource, page: Page, atom: Atom, rss: RSS})
+routes = collections.OrderedDict([('/res' + resource, Resource), (page + '/res' + resource, PageResource), (atom, Atom), (rss, RSS), (page, Page)])
 error_routes.update(web.page.new_error(handler=ErrorPage))
 
 
