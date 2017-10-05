@@ -9,9 +9,9 @@ import urllib.parse
 
 import markdown
 
-import web, web.file, web.page
+import fooster.web, fooster.web.file, fooster.web.page
 
-from cms import config, log
+from cms import config
 
 
 if config.blog:
@@ -48,13 +48,13 @@ def extract_content(file):
     return markdown.markdown(file.read(), extensions=['markdown.extensions.' + extension for extension in config.extensions], output_format='xhtml5')
 
 
-class Resource(web.file.FileHandler):
+class Resource(fooster.web.file.FileHandler):
     local = config.template + '/res'
     remote = '/res'
     fileidx = 0
 
     def respond(self):
-        norm_request = web.file.normpath(self.groups[self.fileidx])
+        norm_request = fooster.web.file.normpath(self.groups[self.fileidx])
         if self.groups[self.fileidx] != norm_request:
             self.response.headers.set('Location', self.remote + norm_request)
 
@@ -77,7 +77,7 @@ class PageResource(Resource):
         return super().respond()
 
 
-class Page(web.page.PageHandler):
+class Page(fooster.web.page.PageHandler):
     directory = config.template
     page = 'page.html'
 
@@ -95,7 +95,7 @@ class Page(web.page.PageHandler):
                 self.response.headers.set('Content-Type', 'text/markdown')
                 return open(config.root + page, 'rb')
             except FileNotFoundError:
-                raise web.HTTPError(404)
+                raise fooster.web.HTTPError(404)
         elif page.endswith('/'):
             if not config.blog:
                 page += 'index'
@@ -118,7 +118,7 @@ class Page(web.page.PageHandler):
 
                             index += '\n<li><h3><a href="{href}">{title}</a></h3><time>{time}</time></li>'.format(href=href, title=title, time=time)
                 except FileNotFoundError:
-                    raise web.HTTPError(404)
+                    raise fooster.web.HTTPError(404)
 
                 index += '\n</ul>'
 
@@ -133,17 +133,17 @@ class Page(web.page.PageHandler):
 
             time = datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
         except FileNotFoundError:
-            raise web.HTTPError(404)
+            raise fooster.web.HTTPError(404)
 
         return output.format(title=title, time=time, content=content)
 
 
-class Feed(web.HTTPHandler):
+class Feed(fooster.web.HTTPHandler):
     format = 'Atom'
 
     def do_get(self):
         if not config.blog:
-            raise web.HTTPError(404)
+            raise fooster.web.HTTPError(404)
 
         directory = self.groups[0]
 
@@ -151,7 +151,7 @@ class Feed(web.HTTPHandler):
             with open(config.root + directory + '/feed.json', 'r') as file:
                 data = json.load(file)
         except FileNotFoundError:
-            raise web.HTTPError(404)
+            raise fooster.web.HTTPError(404)
 
         fg = feedgen.feed.FeedGenerator()
 
@@ -216,19 +216,19 @@ class RSS(Feed):
     format = 'RSS'
 
 
-class ErrorPage(web.page.PageErrorHandler):
+class ErrorPage(fooster.web.page.PageErrorHandler):
     directory = config.template
     page = 'error.html'
 
 
 routes = collections.OrderedDict([('/res' + resource, Resource), (page + '/res' + resource, PageResource), (atom, Atom), (rss, RSS), (page, Page)])
-error_routes.update(web.page.new_error(handler=ErrorPage))
+error_routes.update(fooster.web.page.new_error(handler=ErrorPage))
 
 
 def start():
     global http
 
-    http = web.HTTPServer(config.addr, routes, error_routes, log=log.httplog)
+    http = fooster.web.HTTPServer(config.addr, routes, error_routes)
     http.start()
 
 
@@ -237,3 +237,9 @@ def stop():
 
     http.stop()
     http = None
+
+
+def join():
+    global http
+
+    http.join()
