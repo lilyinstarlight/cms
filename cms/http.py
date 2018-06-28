@@ -18,10 +18,10 @@ if config.blog:
     import feedgen.feed
 
 
-resource = '([/a-zA-Z0-9._-]+)'
-page = '([/a-zA-Z0-9._-]+(?:\.md)?)'
-atom = '([/a-zA-Z0-9._-]+)atom\.xml'
-rss = '([/a-zA-Z0-9._-]+)rss\.xml'
+resource = '(?P<file>[/a-zA-Z0-9._-]+)'
+page = '(?P<page>[/a-zA-Z0-9._-]+(?:\.md)?)'
+atom = '(?P<page>[/a-zA-Z0-9._-]+)atom\.xml'
+rss = '(?P<page>[/a-zA-Z0-9._-]+)rss\.xml'
 
 http = None
 
@@ -51,25 +51,22 @@ def extract_content(file):
 class Resource(fooster.web.file.FileHandler):
     local = config.template + '/res'
     remote = '/res'
-    fileidx = 0
 
     def respond(self):
-        norm_request = fooster.web.file.normpath(self.groups[self.fileidx])
-        if self.groups[self.fileidx] != norm_request:
+        norm_request = fooster.web.file.normpath(self.groups['file'])
+        if self.groups['file'] != norm_request:
             self.response.headers.set('Location', self.remote + norm_request)
 
             return 307, ''
 
-        self.filename = self.local + urllib.parse.unquote(self.groups[self.fileidx])
+        self.filename = self.local + urllib.parse.unquote(self.groups['file'])
 
         return super().respond()
 
 
 class PageResource(Resource):
-    fileidx = 1
-
     def respond(self):
-        page = self.groups[0]
+        page = self.groups['page']
 
         self.local = config.root + page + '.res'
         self.remote = page + '/res'
@@ -82,13 +79,13 @@ class Page(fooster.web.page.PageHandler):
     page = 'page.html'
 
     def respond(self):
-        if config.blog and self.groups[0].endswith('/'):
+        if config.blog and self.groups['page'].endswith('/'):
             self.page = 'index.html'
 
         return super().respond()
 
     def format(self, output):
-        page = self.groups[0]
+        page = self.groups['page']
 
         if page.endswith('.md'):
             try:
@@ -145,7 +142,7 @@ class Feed(fooster.web.HTTPHandler):
         if not config.blog:
             raise fooster.web.HTTPError(404)
 
-        directory = self.groups[0]
+        directory = self.groups['page']
 
         try:
             with open(config.root + directory + '/feed.json', 'r') as file:
