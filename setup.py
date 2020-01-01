@@ -38,7 +38,7 @@ setup(
     license='MIT',
     author='Foster McLane',
     author_email='fkmclane@gmail.com',
-    install_requires=['fooster-web', 'markdown', 'feedgen'],
+    install_requires=['fooster-web', 'dateutil', 'markdown', 'feedgen'],
     packages=find_packages(),
     package_data={'': ['html/*.*', 'res/*.*']},
     entry_points={'console_scripts': ['cms = cms.__main__:main']},

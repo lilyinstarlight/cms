@@ -17,3 +17,9 @@ blog = False
 
 # markdown extensions
 extensions = ['extra', 'codehilite', 'smarty', 'toc']
+
+# datetime format
+datetime_format = '%Y-%m-%d %H:%M %Z'
+
+# datetime timezone
+datetime_tz = 'UTC'
