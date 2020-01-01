@@ -15,11 +15,11 @@ root = '/var/www/cms'
 # whether this website is a blog
 blog = False
 
+# datetime timezone
+timezone = 'UTC'
+
 # markdown extensions
 extensions = ['extra', 'codehilite', 'smarty', 'toc']
 
 # datetime format
 datetime_format = '%Y-%m-%d %H:%M %Z'
-
-# datetime timezone
-datetime_tz = 'UTC'

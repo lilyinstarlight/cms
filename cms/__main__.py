@@ -15,6 +15,7 @@ def main():
     parser.add_argument('-t', '--template', dest='template', help='template directory to use')
     parser.add_argument('-l', '--log', dest='log', help='log directory to use')
     parser.add_argument('-b', '--blog', action='store_true', default=False, dest='blog', help='indicate whether this website is a blog')
+    parser.add_argument('-t', '--timezone', dest='timezone', help='timezone for displayed times')
     parser.add_argument('root', nargs='?', help='root directory to serve markdown files')
 
     args = parser.parse_args()
@@ -38,6 +39,9 @@ def main():
 
     if args.blog:
         config.blog = args.blog
+
+    if args.timezone:
+        config.timezone = args.timezone
 
     if args.root:
         config.root = args.root
