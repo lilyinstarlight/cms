@@ -110,7 +110,7 @@ class Page(fooster.web.page.PageHandler):
 
                             time = datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc).astimezone(dateutil.tz.gettz(config.timezone))
 
-                            index += '\n<li><h3><a href="{href}">{title}</a></h3><time datetime="{datetime}">{time}</time></li>'.format(href=href, title=title, datetime=time.isoformat(), time=time.strftime(config.datetime_format))
+                            index += '\n<li><h3><a href="{href}">{title}</a></h3><time datetime="{datetime}">{time}</time></li>'.format(href=href, title=title, datetime=time.isoformat(timespec='milliseconds'), time=time.strftime(config.datetime_format))
                 except FileNotFoundError:
                     raise fooster.web.HTTPError(404)
 
@@ -131,7 +131,7 @@ class Page(fooster.web.page.PageHandler):
         except FileNotFoundError:
             raise fooster.web.HTTPError(404)
 
-        return output.format(title=title, datetime=time.isoformat(), time=time.strftime(config.datetime_format), content=content)
+        return output.format(title=title, datetime=time.isoformat(timespec='milliseconds'), time=time.strftime(config.datetime_format), content=content)
 
 
 class Feed(fooster.web.HTTPHandler):
