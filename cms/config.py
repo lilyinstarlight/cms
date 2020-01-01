@@ -1,5 +1,5 @@
 # address to listen on
-addr = ('', 8080)
+addr = ('', 8000)
 
 # log locations
 log = '/var/log/cms/cms.log'

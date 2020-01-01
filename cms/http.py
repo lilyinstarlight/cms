@@ -1,15 +1,14 @@
 import collections
 import datetime
 import json
-import mimetypes
 import os
 import os.path
-import time
-import urllib.parse
 
 import markdown
 
-import fooster.web, fooster.web.file, fooster.web.page
+import fooster.web
+import fooster.web.file
+import fooster.web.page
 
 from cms import config
 
@@ -18,10 +17,10 @@ if config.blog:
     import feedgen.feed
 
 
-resource = '(?P<file>[/a-zA-Z0-9._-]+)'
-page = '(?P<page>[/a-zA-Z0-9._-]+(?:\.md)?)'
-atom = '(?P<page>[/a-zA-Z0-9._-]+)atom\.xml'
-rss = '(?P<page>[/a-zA-Z0-9._-]+)rss\.xml'
+resource = r'(?P<path>/[/a-zA-Z0-9._-]*)'
+page = r'(?P<page>/[/a-zA-Z0-9._-]*(?:\.md)?)'
+atom = r'(?P<page>/[/a-zA-Z0-9._-]*)atom\.xml'
+rss = r'(?P<page>/[/a-zA-Z0-9._-]*)rss\.xml'
 
 http = None
 
@@ -32,14 +31,14 @@ error_routes = {}
 def extract_title(file):
     title = file.readline()
 
-    title.strip()
+    title = title.strip()
 
     if title[0] == '#':
         title = title[1:]
     else:
         file.readline()
 
-    title.strip()
+    title = title.strip()
 
     return title
 
@@ -48,37 +47,35 @@ def extract_content(file):
     return markdown.markdown(file.read(), extensions=['markdown.extensions.' + extension for extension in config.extensions], output_format='xhtml5')
 
 
-class Resource(fooster.web.file.FileHandler):
+class Resource(fooster.web.file.PathHandler):
     local = config.template + '/res'
     remote = '/res'
 
-    def respond(self):
-        norm_request = fooster.web.file.normpath(self.groups['file'])
-        if self.groups['file'] != norm_request:
-            self.response.headers.set('Location', self.remote + norm_request)
-
-            return 307, ''
-
-        self.filename = self.local + urllib.parse.unquote(self.groups['file'])
-
-        return super().respond()
-
 
 class PageResource(Resource):
-    def respond(self):
-        page = self.groups['page']
+    local = config.root
+    remote = '/'
 
-        self.local = config.root + page + '.res'
-        self.remote = page + '/res'
+    def respond(self):
+        self.pathstr = self.groups['page'] + '.res' + self.groups['path']
 
         return super().respond()
 
 
 class Page(fooster.web.page.PageHandler):
     directory = config.template
-    page = 'page.html'
+    page = 'post.html' if config.blog else 'page.html'
 
     def respond(self):
+        norm_request = fooster.web.file.normpath(self.groups['page'])
+        if not self.groups['page'] or self.groups['page'] != norm_request:
+            if not norm_request:
+                norm_request = '/'
+
+            self.response.headers.set('Location', norm_request)
+
+            return 307, ''
+
         if config.blog and self.groups['page'].endswith('/'):
             self.page = 'index.html'
 
@@ -94,9 +91,7 @@ class Page(fooster.web.page.PageHandler):
             except FileNotFoundError:
                 raise fooster.web.HTTPError(404)
         elif page.endswith('/'):
-            if not config.blog:
-                page += 'index'
-            else:
+            if config.blog:
                 index = '<ul>'
 
                 try:
@@ -120,6 +115,8 @@ class Page(fooster.web.page.PageHandler):
                 index += '\n</ul>'
 
                 return output.format(index=index)
+            else:
+                page += 'index'
 
         try:
             path = config.root + page + '.md'
@@ -141,6 +138,15 @@ class Feed(fooster.web.HTTPHandler):
     def do_get(self):
         if not config.blog:
             raise fooster.web.HTTPError(404)
+
+        norm_request = fooster.web.file.normpath(self.groups['page'])
+        if not self.groups['page'] or self.groups['page'] != norm_request:
+            if not norm_request:
+                norm_request = '/'
+
+            self.response.headers.set('Location', norm_request)
+
+            return 307, ''
 
         directory = self.groups['page']
 

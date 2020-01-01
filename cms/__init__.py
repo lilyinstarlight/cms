@@ -1,2 +1,2 @@
 name = 'cms'
-version = '0.0a0'
+version = '0.1b1'
