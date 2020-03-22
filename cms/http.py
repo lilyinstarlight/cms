@@ -1,8 +1,9 @@
 import collections
 import datetime
+import html
+import html.parser
 import json
 import os
-import os.path
 
 import dateutil.tz
 
@@ -21,13 +22,44 @@ if config.blog:
 
 resource = r'(?P<path>/[/a-zA-Z0-9._-]*)'
 page = r'(?P<page>/[/a-zA-Z0-9._-]*(?:\.md)?)'
-atom = r'(?P<page>/[/a-zA-Z0-9._-]*)atom\.xml'
-rss = r'(?P<page>/[/a-zA-Z0-9._-]*)rss\.xml'
+atom = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))atom\.xml'
+rss = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))rss\.xml'
 
 http = None
 
 routes = collections.OrderedDict()
 error_routes = {}
+
+
+class HTMLTextExtractor(html.parser.HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+
+        self.text = []
+
+    def handle_data(self, data):
+        self.text.append(data)
+
+    def handle_entityref(self, name):
+        self.text.append('&{};'.format(name))
+
+    def handle_charref(self, num):
+        self.text.append('&#{};'.format(num))
+
+    def get_text(self):
+        return ''.join(self.text)
+
+
+def clean(markup):
+    extractor = HTMLTextExtractor()
+    extractor.feed(markup)
+    extractor.close()
+
+    return extractor.get_text()
+
+
+def render(content):
+    return markdown.markdown(content, extensions=['markdown.extensions.' + extension for extension in config.extensions], output_format='xhtml')
 
 
 def extract_title(file):
@@ -42,11 +74,38 @@ def extract_title(file):
 
     title = title.strip()
 
-    return title
+    rendered = render(title)
+    if rendered.startswith('<p>') and rendered.endswith('</p>'):
+        rendered = rendered[3:-4]
+
+    return rendered
+
+
+def extract_datetime(file):
+    pos = file.tell()
+
+    date = file.readline()
+    while date and not date.strip():
+        date = file.readline()
+
+    time = None
+
+    if not time and date.startswith('Date:'):
+        try:
+            time = datetime.datetime.strptime(date[5:].strip(), config.datetime_format).astimezone(dateutil.tz.gettz(config.timezone))
+        except ValueError:
+            pass
+
+    if not time:
+        time = datetime.datetime.fromtimestamp(os.fstat(file.fileno()).st_mtime, datetime.timezone.utc).astimezone(dateutil.tz.gettz(config.timezone))
+
+        file.seek(pos)
+
+    return time
 
 
 def extract_content(file):
-    return markdown.markdown(file.read(), extensions=['markdown.extensions.' + extension for extension in config.extensions], output_format='xhtml5')
+    return render(file.read())
 
 
 class Resource(fooster.web.file.PathHandler):
@@ -98,7 +157,7 @@ class Page(fooster.web.page.PageHandler):
 
                 try:
                     files = [filename for filename in os.listdir(config.root + page)]
-                    files.sort(key=lambda filename: os.path.getmtime(config.root + page + filename), reverse=True)
+                    posts = []
 
                     for filename in files:
                         if filename.endswith('.md'):
@@ -107,37 +166,39 @@ class Page(fooster.web.page.PageHandler):
 
                             with open(path, 'r') as file:
                                 title = extract_title(file)
+                                time = extract_datetime(file)
 
-                            time = datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc).astimezone(dateutil.tz.gettz(config.timezone))
-
-                            index += '\n<li><h3><a href="{href}">{title}</a></h3><time datetime="{datetime}">{time}</time></li>'.format(href=href, title=title, datetime=time.isoformat(timespec='milliseconds'), time=time.strftime(config.datetime_format))
+                            posts.append({'href': href, 'title': title, 'datetime': time})
                 except FileNotFoundError:
                     raise fooster.web.HTTPError(404)
+
+                posts.sort(key=lambda post: post['datetime'], reverse=True)
+
+                for post in posts:
+                    index += '\n<li><h3><a href="{href}">{title}</a></h3><time datetime="{datetime}">{time}</time></li>'.format(href=post['href'], title=post['title'], datetime=post['datetime'].isoformat(timespec='milliseconds'), time=html.escape(post['datetime'].strftime(config.datetime_format)))
 
                 index += '\n</ul>'
 
                 return output.format(index=index)
             else:
                 page += 'index'
-
         try:
             path = config.root + page + '.md'
 
             with open(path, 'r') as file:
                 title = extract_title(file)
+                time = extract_datetime(file)
                 content = extract_content(file)
-
-            time = datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc).astimezone(dateutil.tz.gettz(config.timezone))
         except FileNotFoundError:
             raise fooster.web.HTTPError(404)
 
-        return output.format(title=title, datetime=time.isoformat(timespec='milliseconds'), time=time.strftime(config.datetime_format), content=content)
+        return output.format(title_clean=clean(title), title=title, datetime=time.isoformat(timespec='milliseconds'), time=html.escape(time.strftime(config.datetime_format)), content=content)
 
 
 class Feed(fooster.web.HTTPHandler):
     format = 'Atom'
 
-    def do_get(self):
+    def respond(self):
         if not config.blog:
             raise fooster.web.HTTPError(404)
 
@@ -150,10 +211,13 @@ class Feed(fooster.web.HTTPHandler):
 
             return 307, ''
 
+        return super().respond()
+
+    def do_get(self):
         directory = self.groups['page']
 
         try:
-            with open(config.root + directory + '/feed.json', 'r') as file:
+            with open(config.root + directory + 'feed.json', 'r') as file:
                 data = json.load(file)
         except FileNotFoundError:
             raise fooster.web.HTTPError(404)
@@ -179,29 +243,36 @@ class Feed(fooster.web.HTTPHandler):
             fg.rights(data['rights'])
 
         files = [filename for filename in os.listdir(config.root + directory)]
-        files.sort(key=lambda filename: os.path.getmtime(config.root + directory + filename), reverse=True)
-
-        updated = None
+        posts = []
 
         for filename in files:
             if filename.endswith('.md'):
-                fe = fg.add_entry()
-
-                href = directory + filename
-                path = config.root + href
+                href = page + filename[:-3]
+                path = config.root + page + filename
 
                 with open(path, 'r') as file:
-                    fe.title(extract_title(file))
-                    fe.content(extract_content(file), src=href)
+                    title = extract_title(file)
+                    time = extract_datetime(file)
+                    content = extract_content(file)
 
-                fe.id(href)
+                posts.append({'href': href, 'title': title, 'datetime': time, 'content': content})
 
-                date = datetime.datetime.fromtimestamp(os.path.getmtime(path), datetime.timezone.utc).astimezone(dateutil.tz.gettz(config.timezone))
-                fe.published(date)
-                fe.updated(date)
+        posts.sort(key=lambda post: post['datetime'], reverse=True)
 
-                if not updated or date > updated:
-                    updated = date
+        updated = None
+
+        for post in posts:
+            fe = fg.add_entry()
+
+            fe.title(post['title'])
+            fe.published(post['datetime'])
+            fe.updated(post['datetime'])
+            fe.content(post['content'], src=post['href'])
+
+            fe.id(post['href'])
+
+            if not updated or post['datetime'] > updated:
+                updated = post['datetime']
 
         fg.updated(updated)
 
@@ -210,7 +281,7 @@ class Feed(fooster.web.HTTPHandler):
         elif self.format == 'RSS':
             return 200, fg.rss_str(pretty=True)
         else:
-            raise NotImplementedError
+            raise NotImplementedError()
 
 
 class Atom(Feed):
