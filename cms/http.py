@@ -64,6 +64,8 @@ def render(content):
 
 def extract_title(file):
     title = file.readline()
+    while title and not title.strip():
+        title = file.readline()
 
     title = title.strip()
 
@@ -172,6 +174,9 @@ class Page(fooster.web.page.PageHandler):
                 except FileNotFoundError:
                     raise fooster.web.HTTPError(404)
 
+                if len(posts) == 0:
+                    raise fooster.web.HTTPError(404)
+
                 posts.sort(key=lambda post: post['datetime'], reverse=True)
 
                 for post in posts:
@@ -247,8 +252,8 @@ class Feed(fooster.web.HTTPHandler):
 
         for filename in files:
             if filename.endswith('.md'):
-                href = page + filename[:-3]
-                path = config.root + page + filename
+                href = directory + filename[:-3]
+                path = config.root + directory + filename
 
                 with open(path, 'r') as file:
                     title = extract_title(file)
@@ -257,7 +262,7 @@ class Feed(fooster.web.HTTPHandler):
 
                 posts.append({'href': href, 'title': title, 'datetime': time, 'content': content})
 
-        posts.sort(key=lambda post: post['datetime'], reverse=True)
+        posts.sort(key=lambda post: post['datetime'])
 
         updated = None
 
