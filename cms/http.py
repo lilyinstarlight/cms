@@ -25,7 +25,7 @@ page = r'(?P<page>/[/a-zA-Z0-9._-]*(?:\.md)?)'
 atom = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))atom\.xml'
 rss = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))rss\.xml'
 
-http = None
+httpd = None
 
 routes = collections.OrderedDict()
 error_routes = {}
@@ -139,8 +139,11 @@ class Page(fooster.web.page.PageHandler):
 
             return 307, ''
 
-        if config.blog and self.groups['page'].endswith('/'):
-            self.page = 'index.html'
+        if self.groups['page'].endswith('/'):
+            if config.blog:
+                self.page = 'posts.html'
+            else:
+                self.page = 'index.html'
 
         return super().respond()
 
@@ -184,7 +187,7 @@ class Page(fooster.web.page.PageHandler):
 
                 index += '\n</ul>'
 
-                return output.format(index=index)
+                return output.format(posts=index)
             else:
                 page += 'index'
         try:
@@ -307,20 +310,20 @@ error_routes.update(fooster.web.page.new_error(handler=ErrorPage))
 
 
 def start():
-    global http
+    global httpd
 
-    http = fooster.web.HTTPServer(config.addr, routes, error_routes)
-    http.start()
+    httpd = fooster.web.HTTPServer(config.addr, routes, error_routes)
+    httpd.start()
 
 
 def stop():
-    global http
+    global httpd
 
-    http.stop()
-    http = None
+    httpd.stop()
+    httpd = None
 
 
 def join():
-    global http
+    global httpd
 
-    http.join()
+    httpd.join()
