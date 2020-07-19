@@ -158,6 +158,12 @@ class Page(fooster.web.page.PageHandler):
                 raise fooster.web.HTTPError(404)
         elif page.endswith('/'):
             if config.blog:
+                try:
+                    with open(config.root + page + 'meta.json', 'r') as file:
+                        meta = json.load(file)
+                except FileNotFoundError:
+                    meta = {'title': '', 'subtitle': '', 'author': {'name': '', 'email': ''}}
+
                 index = '<ul>'
 
                 try:
@@ -187,7 +193,7 @@ class Page(fooster.web.page.PageHandler):
 
                 index += '\n</ul>'
 
-                return output.format(posts=index)
+                return output.format(title_clean=clean(meta['title']), title=html.escape(meta['title']), subtitle=html.escape(meta['subtitle']), author_name=html.escape(meta['author']['name']), author_email=html.escape(meta['author']['email']), posts=index)
             else:
                 page += 'index'
         try:
@@ -225,30 +231,30 @@ class Feed(fooster.web.HTTPHandler):
         directory = self.groups['page']
 
         try:
-            with open(config.root + directory + 'feed.json', 'r') as file:
-                data = json.load(file)
+            with open(config.root + directory + 'meta.json', 'r') as file:
+                meta = json.load(file)
         except FileNotFoundError:
             raise fooster.web.HTTPError(404)
 
         fg = feedgen.feed.FeedGenerator()
 
         fg.id(directory)
-        fg.title(data['title'])
-        fg.subtitle(data['subtitle'])
-        fg.author(data['author'])
+        fg.title(meta['title'])
+        fg.subtitle(meta['subtitle'])
+        fg.author(meta['author'])
         fg.link(href=directory)
 
-        if 'link' in data:
-            fg.link(data['link'])
+        if 'link' in meta:
+            fg.link(meta['link'])
 
-        if 'logo' in data:
-            fg.logo(data['logo'])
+        if 'logo' in meta:
+            fg.logo(meta['logo'])
 
-        if 'language' in data:
-            fg.language(data['language'])
+        if 'language' in meta:
+            fg.language(meta['language'])
 
-        if 'rights' in data:
-            fg.rights(data['rights'])
+        if 'rights' in meta:
+            fg.rights(meta['rights'])
 
         files = [filename for filename in os.listdir(config.root + directory)]
         posts = []
