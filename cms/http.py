@@ -5,6 +5,7 @@ import html.parser
 import json
 import os
 
+import dateutil.parser
 import dateutil.tz
 
 import markdown
@@ -94,7 +95,7 @@ def extract_datetime(file):
 
     if not time and date.startswith('Date:'):
         try:
-            time = datetime.datetime.strptime(date[5:].strip(), config.datetime_format).astimezone(dateutil.tz.gettz(config.timezone))
+            time = dateutil.parser.parse(date[5:].strip()).astimezone(dateutil.tz.gettz(config.timezone))
         except ValueError:
             pass
 
