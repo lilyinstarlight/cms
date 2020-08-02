@@ -95,7 +95,7 @@ def extract_datetime(file):
 
     if not time and date.startswith('Date:'):
         try:
-            time = dateutil.parser.parse(date[5:].strip()).astimezone(dateutil.tz.gettz(config.timezone))
+            time = dateutil.parser.isoparse(date[5:].strip()).astimezone(dateutil.tz.gettz(config.timezone))
         except ValueError:
             pass
 
