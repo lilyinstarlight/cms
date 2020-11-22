@@ -1,2 +1,1 @@
-name = 'cms'
-version = '0.3b3'
+__version__ = '0.3.0'

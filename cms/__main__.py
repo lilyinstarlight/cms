@@ -1,9 +1,6 @@
 import argparse
 import logging
 import signal
-import sys
-
-import fooster.web
 
 from cms import config
 
@@ -46,27 +43,16 @@ def main():
     if args.root:
         config.root = args.root
 
-
-    # setup logging
-    log = logging.getLogger('cms')
-    log.setLevel(logging.INFO)
-    if config.log:
-        log.addHandler(logging.FileHandler(config.log))
-    else:
-        log.addHandler(logging.StreamHandler(sys.stdout))
-
-    if config.http_log:
-        http_log_handler = logging.FileHandler(config.http_log)
-        http_log_handler.setFormatter(fooster.web.HTTPLogFormatter())
-
-        logging.getLogger('http').addHandler(http_log_handler)
+    config._apply()
 
 
-    from cms import name, version
+    from cms import __version__
     from cms import http
 
 
-    log.info(name + ' ' + version + ' starting...')
+    log = logging.getLogger('cms')
+
+    log.info('cms ' + __version__ + ' starting...')
 
     # start everything
     http.start()

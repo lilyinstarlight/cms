@@ -5,7 +5,6 @@ import re
 from setuptools import setup, find_packages
 
 
-name = None
 version = None
 
 
@@ -24,20 +23,23 @@ def find(haystack, *needles):
                 del regexes[rindex]
                 break
 
-    return values
+    if len(needles) == 1:
+        return values[0]
+    else:
+        return values
 
 
 with open(os.path.join(os.path.dirname(__file__), 'cms', '__init__.py'), 'r') as cms:
-    name, version = find(cms, 'name', 'version')
+    version = find(cms, '__version__')
 
 
 setup(
-    name=name,
+    name='cms',
     version=version,
     description='a content management system that uses plain markdown files',
     license='MIT',
-    author='Foster McLane',
-    author_email='fkmclane@gmail.com',
+    author='Lily Foster',
+    author_email='lily@lily.flowers',
     install_requires=['fooster-web', 'python-dateutil', 'markdown', 'feedgen'],
     packages=find_packages(),
     package_data={'': ['html/*.*', 'res/*.*']},
