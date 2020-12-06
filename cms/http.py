@@ -282,7 +282,8 @@ class Feed(fooster.web.HTTPHandler):
             fe.title(post['title'])
             fe.published(post['datetime'])
             fe.updated(post['datetime'])
-            fe.content(post['content'])
+            fe.content(post['content'], type='html')
+            fe.link(href=post['href'])
 
             fe.id(post['href'])
 
