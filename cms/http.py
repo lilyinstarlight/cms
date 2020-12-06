@@ -60,7 +60,7 @@ def clean(markup):
 
 
 def render(content):
-    return markdown.markdown(content, extensions=['markdown.extensions.' + extension for extension in config.extensions], output_format='xhtml')
+    return markdown.markdown(content, extensions=config.extensions, output_format='xhtml')
 
 
 def extract_title(file):
@@ -282,7 +282,7 @@ class Feed(fooster.web.HTTPHandler):
             fe.title(post['title'])
             fe.published(post['datetime'])
             fe.updated(post['datetime'])
-            fe.content(post['content'], src=post['href'])
+            fe.content(post['content'])
 
             fe.id(post['href'])
 
