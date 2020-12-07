@@ -23,8 +23,8 @@ if config.blog:
 
 resource = r'(?P<path>/[/a-zA-Z0-9._-]*)'
 page = r'(?P<page>/[/a-zA-Z0-9._-]*(?:\.md)?)'
-atom = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))atom\.xml'
-rss = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))rss\.xml'
+atom = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))feed\.atom'
+rss = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))feed\.rss'
 
 httpd = None
 
