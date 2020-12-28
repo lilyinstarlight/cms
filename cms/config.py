@@ -27,7 +27,7 @@ blog = False
 timezone = 'UTC'
 
 # markdown extensions
-extensions = ['extra', 'codehilite', 'sane_lists', 'smarty', 'toc']
+extensions = ['sane_lists', 'smarty', 'toc', 'pymdownx.extra', 'pymdownx.caret', 'pymdownx.highlight', 'pymdownx.inlinehilite', 'pymdownx.magiclink', 'pymdownx.saneheaders', 'pymdownx.tasklist', 'pymdownx.tilde']
 
 # datetime format
 datetime_format = '%Y-%m-%d %H:%M %Z'

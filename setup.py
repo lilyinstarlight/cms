@@ -40,7 +40,7 @@ setup(
     license='MIT',
     author='Lily Foster',
     author_email='lily@lily.flowers',
-    install_requires=['fooster-web', 'python-dateutil', 'markdown', 'feedgen'],
+    install_requires=['fooster-web', 'python-dateutil', 'markdown', 'pymdown-extensions', 'feedgen'],
     packages=find_packages(),
     package_data={'': ['html/*.*', 'res/*.*']},
     entry_points={'console_scripts': ['cms = cms.__main__:main']},

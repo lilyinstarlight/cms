@@ -8,6 +8,8 @@ import os
 import dateutil.parser
 import dateutil.tz
 
+import pygments.formatters
+
 import markdown
 
 import fooster.web
@@ -26,7 +28,7 @@ page = r'(?P<page>/[/a-zA-Z0-9._-]*(?:\.md)?)'
 atom = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))feed\.atom'
 rss = r'(?P<page>/(?:[/a-zA-Z0-9._-]*/|))feed\.rss'
 
-httpd = None
+http = None
 
 routes = collections.OrderedDict()
 error_routes = {}
@@ -207,7 +209,7 @@ class Page(fooster.web.page.PageHandler):
         except FileNotFoundError:
             raise fooster.web.HTTPError(404)
 
-        return output.format(title_clean=clean(title), title=title, datetime=time.isoformat(timespec='milliseconds'), time=html.escape(time.strftime(config.datetime_format)), content=content)
+        return output.format(title_clean=clean(title), title=title, style=pygments.formatters.HtmlFormatter().get_style_defs('.highlight'), datetime=time.isoformat(timespec='milliseconds'), time=html.escape(time.strftime(config.datetime_format)), content=content)
 
 
 class Feed(fooster.web.HTTPHandler):
@@ -318,20 +320,20 @@ error_routes.update(fooster.web.page.new_error(handler=ErrorPage))
 
 
 def start():
-    global httpd
+    global http
 
-    httpd = fooster.web.HTTPServer(config.addr, routes, error_routes)
-    httpd.start()
+    http = fooster.web.HTTPServer(config.addr, routes, error_routes)
+    http.start()
 
 
 def stop():
-    global httpd
+    global http
 
-    httpd.stop()
-    httpd = None
+    http.stop()
+    http = None
 
 
 def join():
-    global httpd
+    global http
 
-    httpd.join()
+    http.join()
