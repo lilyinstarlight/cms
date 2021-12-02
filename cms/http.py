@@ -159,7 +159,7 @@ class Page(fooster.web.page.PageHandler):
                 return open(config.root + page, 'rb')
             except FileNotFoundError:
                 raise fooster.web.HTTPError(404)
-        elif page.endswith('/'):
+        elif page.endswith('/') or page.endswith('/index'):
             if config.blog:
                 try:
                     with open(config.root + page + 'meta.json', 'r') as file:
@@ -198,7 +198,8 @@ class Page(fooster.web.page.PageHandler):
 
                 return output.format(title_clean=clean(meta['title']), title=html.escape(meta['title']), subtitle=html.escape(meta['subtitle']), author_name=html.escape(meta['author']['name']), author_email=html.escape(meta['author']['email']), posts=index)
             else:
-                page += 'index'
+                if not page.endswith('/index'):
+                    page += 'index'
         try:
             path = config.root + page + '.md'
 
